@@ -1,0 +1,21 @@
+set_io	PH1A1	E4
+set_io	PH1A2	B2
+set_io	PH1B	F5
+set_io	PH2A1	B1
+set_io	PH2A2	C1
+set_io	PHC	C2
+set_io	CP	F4
+set_io	RS	D2
+set_io	SH	G5
+set_io	pixel_ready	M12
+set_io	init_state	G4
+set_io	ready	E3
+set_io -pullup yes clk	J3
+set_io -pullup yes rst_n	K11
+set_io read_i	F3
+set_io advance	P13
+set_io -pullup yes cp_mode	H3
+set_io -pullup yes line_mode	F2
+
+
+set_frequency clk 4

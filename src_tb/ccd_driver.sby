@@ -1,0 +1,13 @@
+[options]
+mode prove
+
+[engines]
+smtbmc yices
+
+[script]
+plugin -i systemverilog
+read_systemverilog -formal ../src/ccd_driver.sv
+prep -top ccd_driver
+
+[files]
+../src/ccd_driver.sv

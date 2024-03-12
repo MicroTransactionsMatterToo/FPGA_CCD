@@ -1,0 +1,26 @@
+# INPUTS
+set_io -pullup no	read_i	P13	# BUT_1
+set_io -pullup yes	rst_n	K11	# BUT_2
+set_io -pullup yes	cp_mode	F2
+set_io -pullup yes	line_mode	F3
+set_io -pullup yes	advance	F1
+
+# OUTPUTS
+set_io init_state	G10
+set_io pixel_ready	G11
+set_io ready		E4		# LED2
+set_io PH2A1		B2
+set_io PH2A2		F5
+set_io PH1A1		B1
+set_io PH1A2		C1
+set_io CP			C2
+set_io RS			F4
+set_io PH1B			D2
+set_io PHC			G5
+
+set_io SH			D1		# LED1
+
+# CLOCK
+set_io clk			J3
+
+set_frequency clk	5.0

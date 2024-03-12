@@ -1,0 +1,326 @@
+@startuml
+
+skinparam TabSize 4
+ 
+[*] --> INIT
+INIT -> IDLE
+IDLE --> IDLE
+IDLE --> PREP_1 : read_i == 1
+PREP_1 -> PREP_W1
+PREP_W1 -> PREP_W1
+PREP_W1 --> PREP_2 : counter >= 5
+PREP_2 -left-> PREP_W2
+PREP_W2 --> PREP_W2
+PREP_W2 --> PREP_3 : counter >= 5
+
+PREP_3 -> PREP_W3
+PREP_W3 -> PREP_W3
+PREP_W3 --> PREP_4 : counter >= 150
+
+PREP_4 -left-> PREP_W4
+PREP_W4 -> PREP_W4
+PREP_W4 --> PREP_5_RS: counter >= W4_COUNTER_MAX
+
+PREP_5_RS -> PREP_5_CP
+PREP_5_CP --> PREP_W5
+
+PREP_W5 -> PREP_W5
+PREP_W5 ---> PREP_6 : counter >= W5_COUNTER_MAX
+
+PREP_6 -left-> PREP_W6
+PREP_W6 -> PREP_W6
+PREP_W6 --> PREP_7: counter >= W6_COUNTER_MAX
+
+' ====== INIT ======
+INIT: -- OUTPUTS --
+INIT: ready 		<= '0
+INIT: pixel_ready 	<= '0
+
+'======== IDLE =======
+IDLE: -- OUTPUTS --
+IDLE: <code>
+IDLE: SH, RS, CP            <= '0
+IDLE: PH1A1, PH1A2, PH1B    <= '1
+IDLE: PH2A1, PH2A2, PHC     <= '0
+IDLE: pixel_ready           <= '0
+IDLE: ready                 <= '1
+IDLE: </code>
+IDLE: -- INTERNAL --
+IDLE: ""read_count	<= 16'd0""
+IDLE: ""counter		<= 16'd0""
+
+'========= PREP 1 ========
+PREP_1: -- OUTPUTS --
+PREP_1: <code>
+PREP_1: PH1A1, PH1A2, PH1B  <= '0
+PREP_1: ready               <= '0
+PREP_1: pixel_ready         <= '0
+PREP_1: counter             <= counter + 16'd1
+PREP_1: </code>
+PREP_1: == ASSERTIONS ==
+PREP_1: <code>
+PREP_1: SH, RS, CP          == '0
+PREP_1: PH1A1, PH1A2, PH1B  == '1
+PREP_1: PH2A1, PH2A2, PHC   == '0
+PREP_1: ready               == '0
+PREP_1: counter             == 16'd0
+PREP_1: </code>
+PREP_1: == ASSUMES ==
+PREP_1: ""read_i	== '1""
+PREP_1: ""advance	== '0""
+
+note left of PREP_1
+    Page 12 of Datasheet
+    Clock phase 1 pulled low for 6 cycles,
+    just to be safe
+    @35MHz = ~176ns
+    @5MHz = ~1200nm
+    min: 120, max: 2500
+end note
+
+' =========== PREP W1 ============
+PREP_W1: -- INTERNAL --
+PREP_W1: ""counter += 16'd1""
+PREP_W1: == ASSERTIONS ==
+PREP_W1: <code>
+PREP_W1: SH, RS, CP         == '0
+PREP_W1: PH1A1, PH1A2, PH1B == '0
+PREP_W1: PH2A1, PH2A2, PHC  == '0
+PREP_W1: ready              == '0
+PREP_W1: pixel_ready        == '0
+PREP_W1: counter <= 16'd5 && >= 16'd1
+PREP_W1: </code>
+
+
+' =========== PREP 2 ===========
+PREP_2: -- OUTPUTS --
+PREP_2: ""PH1A1, PH1A2, PH1B	<= '1""
+PREP_2: -- INTERNAL --
+PREP_2: ""counter 		<= 16'd0""
+PREP_2: == ASSERTIONS ==
+PREP_2: <code>
+PREP_2: SH, RS, CP          == '0
+PREP_2: PH1A1, PH1A2, PH1B  == '0
+PREP_2: PH2A1, PH2A2, PHC   == '0
+PREP_2: ready               == '0
+PREP_2: pixel_ready         == '0
+PREP_2: counter             <= 16'd5
+PREP_2: </code>
+
+note right of PREP_2
+    Page 12 of datasheet
+    Pull phase 1 high for t1 ns
+    Largely the same as PREP_1, but pulled high,
+    actually documented
+endnote
+
+' ============ PREP W2 =========
+PREP_W2: -- INTERNAL --
+PREP_W2: ""counter <= counter + 16'd1""
+PREP_W2: == ASSERTIONS ==
+PREP_W2: <code>
+PREP_W2: SH, RS, CP         == '0
+PREP_W2: PH1A1, PH1A2, PH1B == '1
+PREP_W2: PH2A1, PH2A2, PHC  == '0
+PREP_W2: ready              == '0
+PREP_W2: counter <= 16'd5 && >= 16'd1
+PREP_W2: </code>
+
+' ========= PREP 3 ==========
+PREP_3: -- INTERNAL --
+PREP_3: ""counter <= 16'd0""
+PREP_3: -- OUTPUTS --
+PREP_3: ""SH <= '1""
+PREP_3: == ASSERTIONS ==
+PREP_3: <code>
+PREP_3: CP, RS              == '0
+PREP_3: PH2A1, PH2A2, PHC   == '0
+PREP_3: SH                  == '0
+PREP_3: counter             >= 16'd5
+PREP_3: ready               == '0
+PREP_3: pixel_ready         == '0
+PREP_3: </code>
+
+note left of PREP_3
+    Page 12 of datasheet
+    Pull SH high for (t3) 150 cycles
+    @35MHz = ~4,285 ns
+    @5MHz  = 30,000 ns
+    (min 3000)
+endnote
+
+' =========== PREP W3 ===========
+PREP_W3: -- INTERNAL --
+PREP_W3: counter <= counter + 16'd1
+PREP_W3: == ASSERTIONS ==
+PREP_W3: <code>
+PREP_W3: SH                 == '1
+PREP_W3: CP, RS             == '0
+PREP_W3: PH2A1, PH2A2, PHC  == '0
+PREP_W3: PH1A1, PH1A2, PH1B == '1
+PREP_W3: ready              == '0
+PREP_W3: pixel_ready        == '0
+PREP_W3: counter   <= 150 && >= 0
+PREP_W3: </code>
+
+
+' =========== PREP 4 ===========
+PREP_4: -- INTERNAL --
+PREP_4: ""counter   <= 16'd0""
+PREP_4: -- OUTPUTS --
+PREP_4: ""SH        <= '0""
+PREP_4: == ASSERTIONS ==
+PREP_4: <code>
+PREP_4: SH                 == '1
+PREP_4: CP, RS             == '0
+PREP_4: PH2A1, PH2A2, PHC  == '0
+PREP_4: PH1A1, PH1A2, PH1B == '1
+PREP_4: ready              == '0
+PREP_4: pixel_ready        == '0
+PREP_4: counter   <= 150 && >= 0
+PREP_4: </code>
+
+note right of PREP_4
+    Page 12
+    Pull SH low, wait for 
+    at least 500ns (t5 - t6)
+    <code>
+    W4_COUNTER_MAX = (
+        $floor(500E-9 / (1 / CLK_FREQ))
+    )
+    </code>
+endnote
+
+' ======== PREP W4 =======
+PREP_W4: -- INTERNAL --
+PREP_W4: ""counter <= counter + 16'd1""
+PREP_W4: == ASSERTIONS ==
+PREP_W4: <code>
+PREP_W4: SH                             == '0
+PREP_W4: CP, RS                         == '0
+PREP_W4: PH2A1, PH2A2, PHC              == '0
+PREP_W4: PH1A1, PH1A2, PH1B             == '1
+PREP_W4: ready                          == '0
+PREP_W4: pixel_ready                    == '0
+PREP_W4: counter <= W4_COUNTER_MAX &&   >= 0
+PREP_W4: </code>
+
+'====== PREP 5 RS =======
+PREP_5_RS: -- INTERNAL --
+PREP_5_RS: ""counter   <= 16'd0""
+PREP_5_RS: -- OUTPUTS --
+PREP_5_RS: ""RS        <= '1""
+PREP_5_RS: == ASSERTIONS ==
+PREP_5_RS: <code>
+PREP_5_RS: SH                             == '0
+PREP_5_RS: CP, RS                         == '0
+PREP_5_RS: PH2A1, PH2A2, PHC              == '0
+PREP_5_RS: PH1A1, PH1A2, PH1B             == '1
+PREP_5_RS: ready                          == '0
+PREP_5_RS: pixel_ready                    == '0
+PREP_5_RS: counter <= W4_COUNTER_MAX &&   >= 0
+PREP_5_RS: </code>
+
+note left of PREP_5_RS
+    Assert RS
+endnote
+
+'======= PREP 5 CP ======
+PREP_5_CP: -- OUTPUTS --
+PREP_5_CP: ""CP     <= '1""
+PREP_5_CP: == ASSERTIONS ==
+PREP_5_CP: <code>
+PREP_5_CP: SH                             == '0
+PREP_5_CP: RS                             == '1
+PREP_5_CP: CP                             == '0
+PREP_5_CP: PH2A1, PH2A2, PHC              == '0
+PREP_5_CP: PH1A1, PH1A2, PH1B             == '1
+PREP_5_CP: ready                          == '0
+PREP_5_CP: pixel_ready                    == '0
+PREP_5_CP: counter                        == 0
+PREP_5_CP: </code>
+
+note right of PREP_5_CP
+    Assert CP.
+    Could probably be done in PREP_5_RS, but trying
+    to follow the datasheet as best as possible
+endnote
+
+'====== PREP 5 WAIT ======
+PREP_W5: -- INTERNAL --
+PREP_W5: ""counter    <= counter + 16'd1""
+PREP_W5: == ASSERTIONS ==
+PREP_W5: <code>
+PREP_W5: SH                             == '0
+PREP_W5: CP, RS                         == '1
+PREP_W5: PH2A1, PH2A2, PHC              == '0
+PREP_W5: PH1A1, PH1A2, PH1B             == '1
+PREP_W5: ready                          == '0
+PREP_W5: pixel_ready                    == '0
+PREP_W5: counter <= W5_COUNTER_MAX &&   >= 0
+PREP_W5: </code>
+
+note left of PREP_W5
+    Wait for the remaining
+    Page 12 of datasheet
+    min 1000 ns from W4, max 2500 ns
+    <code>
+    W5_COUNTER_MAX = (
+        600E-9 / (1 / CLK_FREQ)
+    )
+    </code>
+endnote
+
+'===== PREP 6 =====
+PREP_6: -- INTERNAL --
+PREP_6: counter     <= 16'd0
+PREP_6: -- OUTPUTS --
+PREP_6: ""SH          <= '0""
+PREP_6: == ASSERTIONS ==
+PREP_6: <code>
+PREP_6: SH                             == '0
+PREP_6: CP, RS                         == '1
+PREP_6: PH2A1, PH2A2, PHC              == '0
+PREP_6: PH1A1, PH1A2, PH1B             == '1
+PREP_6: ready                          == '0
+PREP_6: pixel_ready                    == '0
+PREP_6: counter <= W5_COUNTER_MAX &&   >= 0
+PREP_6: </code>
+
+note right of PREP_6
+endnote
+
+'===== PREP WAIT 6 =====
+PREP_W6: -- INTERNAL --
+PREP_W6: ""counter    <= counter + 16'd1""
+PREP_W6: == ASSERTIONS ==
+PREP_W6: <code>
+PREP_W6: SH                             == '1
+PREP_W6: CP, RS                         == '0
+PREP_W6: PH2A1, PH2A2, PHC              == '0
+PREP_W6: PH1A1, PH1A2, PH1B             == '1
+PREP_W6: ready                          == '0
+PREP_W6: pixel_ready                    == '0
+PREP_W6: counter <= W6_COUNTER_MAX &&   >= 0
+PREP_W6: </code>
+
+note left of PREP_W6
+
+endnote
+
+PREP_7: -- INTERNAL --
+PREP_7: ""counter           <= 16'd0""
+PREP_7: -- OUTPUTS --
+PREP_7: PH1A1, PH1A2, PH1B  <= '0
+PREP_7: PH2A1, PH2A2
+
+
+CLK_PH1: -- INTERNAL --
+CLK_PH1: ""counter  <= '0""
+CLK_PH1: -- OUTPUTS --
+CLK_PH1: <code>
+CLK_PH1: PH1A1, PH1A2, PH1B <= '0;
+CLK_PH1: PH2A1, PH2A2, PHC  <= '1;
+CLK_PH1: </code>
+
+@enduml

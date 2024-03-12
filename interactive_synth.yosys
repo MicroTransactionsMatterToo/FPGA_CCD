@@ -1,0 +1,63 @@
+plugin -i systemverilog
+read_systemverilog ccd_driver.sv
+hierarchy -check -top ccd_driver
+proc
+#show -pause -colors 6969 -viewer firefox -format svg
+delete t:$assert
+
+flatten
+tribuf -logic
+deminout
+#show -pause -colors 6969 -viewer firefox -format svg
+
+opt_expr
+opt_clean
+check
+#show -pause -colors 6969 -viewer firefox -format svg
+
+opt -nodffe -nosdff
+#show -pause -colors 6969 -viewer firefox -format svg
+fsm
+opt
+#show -pause -colors 6969 -viewer firefox -format svg
+wreduce
+peepopt
+opt_clean
+share
+techmap -map +/cmp2lut.v -D LUT_WIDTH=4
+#show -pause -colors 6969 -viewer firefox -format svg
+opt_expr
+opt_clean
+memory_dff
+wreduce t:$mul
+#show -pause -colors 6969 -viewer firefox -format svg
+
+alumacc
+opt
+memory -nomap
+opt_clean
+show -pause -colors 6969 -viewer firefox -format svg
+
+ice40_wrapcarry
+#techmap -map +/techmap.v -map +/ice40/arith_map.v
+opt -fast
+#show -pause -colors 6969 -viewer firefox -format svg
+ice40_opt
+#show -pause -colors 6969 -viewer firefox -format svg
+
+dfflegalize -cell $_DFF_?_ 0 -cell $_DFFE_?P_ 0 -cell $_DFF_?P?_ 0 -cell $_DFFE_?P?P_ 0 -cell $_SDFF_?P?_ 0 -cell $_SDFFCE_?P?P_ 0 -cell $_DLATCH_?_ x -mince -1
+opt_expr -mux_undef
+simplemap
+ice40_opt -full
+
+abc
+show -pause -colors 6969 -viewer firefox -format svg
+ice40_opt
+techmap -map +/ice40/latches_map.v
+show -pause -colors 6969 -viewer firefox -format svg
+ice40_wrapcarry -unwrap
+show -pause -colors 6969 -viewer firefox -format svg
+clean
+show -pause -colors 6969 -viewer firefox -format svg
+opt_lut
+show -pause -colors 6969 -viewer firefox -format svg

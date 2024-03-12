@@ -1,0 +1,9 @@
+.hdl_checker/
+__pycache__
+.vscode
+*.gtkw
+*.log
+.f4cache
+**/slpp_all
+src_tb/ccd_driver/
+build/
